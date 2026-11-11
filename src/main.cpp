@@ -53,7 +53,12 @@ namespace {
 		return 1;
 	}
 
-	std::vector<int_t> Run(const yagkp::Graph& g, const std::string& algo, int_t k, double eps) {
+	std::vector<int_t> Run(
+	    const yagkp::UndirectedGraph& g,
+	    const std::string& algo,
+	    int_t k,
+	    double eps
+	) {
 		if (algo == "yagkp") {
 			return yagkp::Partitioner::GetGraphKPartition(g, k);
 		}
@@ -130,7 +135,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	try {
-		const yagkp::Graph g(graph_path, "mtx", true);
+		const yagkp::UndirectedGraph g(graph_path, "mtx", true);
 		yagkp::ProgramConfig::imbalance = eps;
 		// Многопоточен только YAGkP; число потоков — то, что видит OpenMP
 		const int_t threads = algo == "yagkp" ? yagkp::parallel::MaxThreads() : 1;
@@ -147,13 +152,12 @@ int main(int argc, char* argv[]) {
 
 		if (csv) {
 			std::cout << std::filesystem::path(graph_path).stem().string() << ',' << g.n << ','
-			          << g.m / 2 << ',' << k << ',' << eps << ',' << algo << ',' << threads << ','
+			          << g.m << ',' << k << ',' << eps << ',' << algo << ',' << threads << ','
 			          << time_ms << ',' << edge_cut << ',' << std::setprecision(6) << imb << ','
 			          << max_part << '\n';
 		}
 		else {
-			const double opt =
-			    static_cast<double>(g.getSumOfVertexWeights()) / static_cast<double>(k);
+			const double opt = static_cast<double>(g.total_vertex_weight) / static_cast<double>(k);
 			std::cout << std::left << std::fixed << std::setprecision(2) << std::setw(16) << algo
 			          << std::setw(12) << time_ms << std::setw(14) << edge_cut << std::setw(12)
 			          << imb * 100.0 << std::setw(14) << max_part << std::setw(14) << opt << "\n";
