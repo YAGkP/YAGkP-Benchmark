@@ -4,9 +4,9 @@ Benchmarks for [Yet Another Graph k-Partition Library (YAGkP)](https://github.co
 
 ## Partitioners
 
-| partitioner | link | version | algorithms in the benchmark |
-|---|---|---|---|
-| YAGkP | [YAGkP-Lib](https://github.com/YAGkP/YAGkP-Lib) | sequential and parallel, shared memory (OpenMP) | `yagkp`: multilevel recursive bisection |
-| METIS | [KarypisLab/METIS](https://github.com/KarypisLab/METIS) | sequential | `metis_recursive`, `metis_kway` |
-| KaHIP | [KaHIP/KaHIP](https://github.com/KaHIP/KaHIP) | sequential (KaFFPa) | `kahip_fast`, `kahip_eco`, `kahip_strong` |
-| SCOTCH | [live-clones/scotch](https://github.com/live-clones/scotch) | sequential | `scotch` |
+| partitioner | link | type | version | algorithms in the benchmark |
+|---|---|---|---|---|
+| YAGkP | [YAGkP-Lib](https://github.com/YAGkP/YAGkP-Lib) | sequential and parallel, shared memory (OpenMP) | latest `main` | `yagkp`: multilevel recursive bisection |
+| METIS | [KarypisLab/METIS](https://github.com/KarypisLab/METIS) | sequential | `master` of 2026-06-10 (`272d4a9`), after v5.2.1 | `metis_recursive`, `metis_kway` |
+| KaHIP | [KaHIP/KaHIP](https://github.com/KaHIP/KaHIP) | sequential (KaFFPa) | v3.25 | `kahip_fast`, `kahip_eco`, `kahip_strong` |
+| SCOTCH | [live-clones/scotch](https://github.com/live-clones/scotch) | sequential | v7.0.18 | `scotch` |
