@@ -7,7 +7,7 @@ set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/../lib/common.sh"
 
 # Список библиотек: при добавлении новой достаточно дописать её сюда
-DEPS_ALL=(gklib metis scotch kahip)
+DEPS_ALL=(gklib metis scotch kahip mtmetis tbb kaminpar)
 
 usage() {
 	cat <<USAGE

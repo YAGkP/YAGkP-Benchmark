@@ -93,7 +93,7 @@ GRAPHS=()        # only these graphs of the set; empty: all of them
 EXCLUDE=()       # graphs of the set to skip
 KS=(2 4 8 16 32 64)
 SOLVERS=(yagkp)
-THREADS=(1)      # used for yagkp only, the other solvers are single-threaded
+THREADS=(1)      # for the multithreaded solvers (yagkp_bench --threaded-algos), the others run with 1
 REPEATS=1
 IMBALANCE=0.05
 VARIANT=par      # build of yagkp_bench: par or seq
@@ -158,12 +158,16 @@ if [ ${#GRAPHS[@]} -eq 0 ]; then
     exit 1
 fi
 
-# Threads are pinned to cores, as is usual for OpenMP measurements
+# Threads are pinned to cores, as is usual for OpenMP measurements. This
+# applies to the OpenMP solvers (yagkp, mt-metis); TBB (KaMinPar) and SCOTCH
+# ignore these variables
 export OMP_PROC_BIND="${OMP_PROC_BIND:-close}"
 export OMP_PLACES="${OMP_PLACES:-cores}"
 
+threaded="$("$BINARY" --threaded-algos)"
+
 threads_of() { # threads_of <solver>: the thread counts to run the solver with
-    if [ "$1" = "yagkp" ]; then
+    if grep -qx "$1" <<<"$threaded"; then
         echo "${THREADS[@]}"
     else
         echo 1
@@ -219,7 +223,7 @@ for name in "${GRAPHS[@]}"; do
                     label="[$run/$total] $name k=$k $solver threads=$threads repeat=$repeat"
 
                     if line="$(OMP_NUM_THREADS="$threads" "$BINARY" --graph "$SET_DIR/$name.mtx" \
-                        --k "$k" --algo "$solver" --imbalance "$IMBALANCE" --csv 2>"$STDERR")"; then
+                        --k "$k" --algo "$solver" --imbalance "$IMBALANCE" --threads "$threads" --csv 2>"$STDERR")"; then
                         echo "$repeat,$line" >>"$CSV"
                         echo "$label: $(echo "$line" | cut -d, -f8) ms, cut $(echo "$line" | cut -d, -f9)"
                     else

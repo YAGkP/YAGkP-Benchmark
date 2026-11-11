@@ -35,13 +35,41 @@ namespace bench {
 	    const std::string& mode
 	);
 
+	// Multithreaded solvers: threads is the number of threads to use.
+	// SCOTCH with 1 thread is the sequential SCOTCH
+
 	std::vector<int_t> RunSCOTCH(
 	    int_t nparts,
 	    double imbalance,
 	    const std::vector<int_t>& xadj,
 	    const std::vector<int_t>& adjncy,
 	    const std::vector<int_t>& vwgt,
-	    const std::vector<int_t>& adjwgt
+	    const std::vector<int_t>& adjwgt,
+	    int threads
+	);
+
+	// mode: "kway" or "recursive"
+	std::vector<int_t> RunMtMETIS(
+	    int_t nparts,
+	    double imbalance,
+	    const std::vector<int_t>& xadj,
+	    const std::vector<int_t>& adjncy,
+	    const std::vector<int_t>& vwgt,
+	    const std::vector<int_t>& adjwgt,
+	    const std::string& mode,
+	    int threads
+	);
+
+	// preset: a KaMinPar preset name, for example "default", "fast" or "eco"
+	std::vector<int_t> RunKaMinPar(
+	    int_t nparts,
+	    double imbalance,
+	    const std::vector<int_t>& xadj,
+	    const std::vector<int_t>& adjncy,
+	    const std::vector<int_t>& vwgt,
+	    const std::vector<int_t>& adjwgt,
+	    const std::string& preset,
+	    int threads
 	);
 
 } // namespace bench

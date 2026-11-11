@@ -6,6 +6,8 @@
 #
 # Раскладка:
 #   external/<Lib>              исходники (подмодуль git), не изменяются
+#                               (without git: a release archive, see
+#                               deps_fetch_archive)
 #   build/deps/<вариант>/<lib>  промежуточная сборка
 #   deps/<вариант>/<lib>        результат: lib/ и include/
 #
@@ -44,7 +46,11 @@ _deps_stamp_content() {
 	echo "flags:    $BENCH_CXXFLAGS"
 	echo "cc:       $("${CC:-cc}" --version 2>/dev/null | head -n 1)"
 	echo "cxx:      $("${CXX:-c++}" --version 2>/dev/null | head -n 1)"
-	echo "source:   $(git -C "$DEP_SRC" rev-parse HEAD 2>/dev/null || echo unknown)"
+	if [ -n "${DEP_ARCHIVE_SHA256:-}" ]; then
+		echo "source:   $DEP_ARCHIVE_SHA256"
+	else
+		echo "source:   $(git -C "$DEP_SRC" rev-parse HEAD 2>/dev/null || echo unknown)"
+	fi
 	echo "script:   $(cksum <"$script" | cut -d ' ' -f 1)"
 	local dep
 	for dep in ${DEP_DEPENDS[@]+"${DEP_DEPENDS[@]}"}; do
@@ -73,7 +79,9 @@ deps_begin() {
 	fi
 
 	require_cmd cmake git
-	init_submodule "${DEP_SRC#"$BENCH_ROOT"/}"
+	if [ -z "${DEP_ARCHIVE_SHA256:-}" ]; then
+		init_submodule "${DEP_SRC#"$BENCH_ROOT"/}"
+	fi
 
 	local dep
 	for dep in ${DEP_DEPENDS[@]+"${DEP_DEPENDS[@]}"}; do
@@ -96,6 +104,29 @@ deps_begin() {
 
 	rm -rf "$DEP_BUILD" "$DEP_PREFIX"
 	mkdir -p "$DEP_BUILD" "$DEP_PREFIX/lib" "$DEP_PREFIX/include"
+}
+
+# deps_fetch_archive <url> <sha256> <source path>
+#   For libraries without a git repository: download the archive, check its
+#   sha256 and unpack it into <source path> (skipped if already there). Call it
+#   before deps_begin; the stamp then has the sha256 instead of a commit
+deps_fetch_archive() {
+	local url="$1" sha="$2" dir="$BENCH_ROOT/$3"
+	DEP_ARCHIVE_SHA256="$sha"
+	if [ -f "$dir/.archive_sha256" ] && [ "$(cat "$dir/.archive_sha256")" = "$sha" ]; then
+		return
+	fi
+	require_cmd curl tar sha256sum
+	step "Скачиваю $url"
+	local tmp
+	tmp="$(mktemp)"
+	curl -fsSL -o "$tmp" "$url" || die "не удалось скачать $url"
+	echo "$sha  $tmp" | sha256sum -c --quiet - || die "$url: sha256 не совпадает"
+	rm -rf "$dir"
+	mkdir -p "$dir"
+	tar -xzf "$tmp" -C "$dir" --strip-components=1
+	rm -f "$tmp"
+	echo "$sha" >"$dir/.archive_sha256"
 }
 
 # deps_configure [-D...]: конфигурация CMake-проекта библиотеки с общими

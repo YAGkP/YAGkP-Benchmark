@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# SCOTCH: только последовательная библиотека на C
+# SCOTCH: C library with POSIX threads (no MPI)
 # =============================================================================
 set -euo pipefail
 # shellcheck source=../lib/common.sh
@@ -21,7 +21,9 @@ deps_begin scotch external/scotch
 #   BUILD_FORTRAN=OFF         Fortran-интерфейс не нужен, а компилятора может не быть
 #   BUILD_LIBSCOTCHMETIS=OFF  иначе SCOTCH положит свой metis.h и он
 #   INSTALL_METIS_HEADERS=OFF   будет конкурировать с настоящим из deps/
-#   THREADS=OFF               однопоточный, как и остальные участники сравнения
+#   THREADS=ON                POSIX threads; the runner sets their number
+#                             (SCOTCH_contextThreadSpawn). With 1 thread the
+#                             cuts are the same as with THREADS=OFF
 #   USE_ZLIB/LZMA/BZ2=OFF     иначе libscotch потребует -lz -llzma -lbz2 при линковке
 deps_configure \
 	-DBUILD_SHARED_LIBS=OFF \
@@ -31,7 +33,7 @@ deps_configure \
 	-DBUILD_LIBESMUMPS=OFF \
 	-DBUILD_LIBSCOTCHMETIS=OFF \
 	-DINSTALL_METIS_HEADERS=OFF \
-	-DTHREADS=OFF \
+	-DTHREADS=ON \
 	-DUSE_ZLIB=OFF \
 	-DUSE_LZMA=OFF \
 	-DUSE_BZ2=OFF \

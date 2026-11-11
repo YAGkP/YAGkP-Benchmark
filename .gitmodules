@@ -13,3 +13,9 @@
 [submodule "external/YAGkP-Lib"]
 	path = external/YAGkP-Lib
 	url = https://github.com/YAGkP/YAGkP-Lib
+[submodule "external/KaMinPar"]
+	path = external/KaMinPar
+	url = https://github.com/KaHIP/KaMinPar.git
+[submodule "external/oneTBB"]
+	path = external/oneTBB
+	url = https://github.com/uxlfoundation/oneTBB.git

@@ -99,7 +99,7 @@ commit_of() { # commit_of <каталог>: коммит и пометка о н
 	echo "compiler:  $("${CXX:-c++}" --version 2>/dev/null | head -n 1)"
 	echo "bench:     $(commit_of "$BENCH_ROOT")"
 	echo "yagkp:     $(commit_of "$YAGKP_DIR") in $YAGKP_DIR"
-	for lib in gklib metis scotch kahip; do
+	for lib in gklib metis scotch kahip mtmetis tbb kaminpar; do
 		echo "$(printf '%-10s' "$lib:") $(grep '^source:' "$BENCH_DEPS_ROOT/seq/$lib/.stamp" | awk '{print substr($2, 1, 7)}')"
 	done
 } >"$BUILD_DIR/build_info.txt"

@@ -8,7 +8,9 @@ EXCLUDE=()          # graphs to skip
 
 KS=(2 4 8 16 32 64)
 SOLVERS=(yagkp)     # yagkp kahip_fast kahip_eco kahip_strong metis_kway metis_recursive scotch
-THREADS=(1)         # for yagkp only; more than 1 needs VARIANT=par
+                    # mtmetis_kway mtmetis_recursive kaminpar_fast kaminpar_default kaminpar_eco
+THREADS=(1)         # for the multithreaded solvers: yagkp scotch mtmetis_* kaminpar_*;
+                    # yagkp with more than 1 needs VARIANT=par
 REPEATS=1
 IMBALANCE=0.05
 VARIANT=par         # build/<VARIANT>/yagkp_bench: par or seq

@@ -4,12 +4,19 @@
 //   yagkp_bench --graph data/walshaw/add20.mtx --k 4 --algo yagkp --csv  # строка CSV
 //   yagkp_bench --csv-header                                              # заголовок CSV
 //   yagkp_bench --algos                                                   # доступные решатели
+//   yagkp_bench --threaded-algos                                          # многопоточные из них
+//
+// Threads of the multithreaded solvers: --threads <n>, or OMP_NUM_THREADS
+// if it is not given, or 1. YAGkP takes the number from OMP_NUM_THREADS only
+// (and runs in parallel only in the par build).
 //
 // Граф читается и метрики считаются средствами YAGkP, одинаково для всех
 // решателей. Время — только работа решателя: чтение графа и подсчёт метрик в
 // него не входят
 
+#include <algorithm>
 #include <chrono>
+#include <cstdlib>
 #include <filesystem>
 #include <iomanip>
 #include <iostream>
@@ -38,13 +45,41 @@ namespace {
 	    "metis_kway",
 	    "metis_recursive",
 	    "scotch",
+	    "mtmetis_kway",
+	    "mtmetis_recursive",
+	    "kaminpar_fast",
+	    "kaminpar_default",
+	    "kaminpar_eco",
 	};
+
+	// Solvers that can run in several threads
+	const std::vector<std::string> kThreadedAlgos = {
+	    "yagkp",
+	    "scotch",
+	    "mtmetis_kway",
+	    "mtmetis_recursive",
+	    "kaminpar_fast",
+	    "kaminpar_default",
+	    "kaminpar_eco",
+	};
+
+	bool IsThreaded(const std::string& algo) {
+		return std::find(kThreadedAlgos.begin(), kThreadedAlgos.end(), algo) !=
+		       kThreadedAlgos.end();
+	}
+
+	// The default number of threads: OMP_NUM_THREADS, or 1
+	int DefaultThreads() {
+		const char* value = std::getenv("OMP_NUM_THREADS");
+		return value != nullptr && std::atoi(value) > 0 ? std::atoi(value) : 1;
+	}
 
 	int Usage() {
 		std::cerr << "Usage: yagkp_bench --graph <file.mtx> --k <k> --algo <algo>"
-		             " [--imbalance <eps>] [--csv]\n"
+		             " [--imbalance <eps>] [--threads <n>] [--csv]\n"
 		             "       yagkp_bench --csv-header\n"
 		             "       yagkp_bench --algos\n"
+		             "       yagkp_bench --threaded-algos\n"
 		             "Algos:";
 		for (const std::string& algo: kAlgos) {
 			std::cerr << ' ' << algo;
@@ -57,7 +92,8 @@ namespace {
 	    const yagkp::UndirectedGraph& g,
 	    const std::string& algo,
 	    int_t k,
-	    double eps
+	    double eps,
+	    int threads
 	) {
 		if (algo == "yagkp") {
 			return yagkp::Partitioner::GetGraphKPartition(g, k);
@@ -85,7 +121,39 @@ namespace {
 			);
 		}
 		if (algo == "scotch") {
-			return bench::RunSCOTCH(k, eps, g.xadj, g.adjncy, g.vertex_weights, g.edge_weights);
+			return bench::RunSCOTCH(
+			    k,
+			    eps,
+			    g.xadj,
+			    g.adjncy,
+			    g.vertex_weights,
+			    g.edge_weights,
+			    threads
+			);
+		}
+		if (algo == "mtmetis_kway" || algo == "mtmetis_recursive") {
+			return bench::RunMtMETIS(
+			    k,
+			    eps,
+			    g.xadj,
+			    g.adjncy,
+			    g.vertex_weights,
+			    g.edge_weights,
+			    algo.substr(8),
+			    threads
+			);
+		}
+		if (algo.starts_with("kaminpar_")) {
+			return bench::RunKaMinPar(
+			    k,
+			    eps,
+			    g.xadj,
+			    g.adjncy,
+			    g.vertex_weights,
+			    g.edge_weights,
+			    algo.substr(9),
+			    threads
+			);
 		}
 		throw std::invalid_argument("unknown algo: " + algo);
 	}
@@ -97,6 +165,7 @@ int main(int argc, char* argv[]) {
 	int_t k    = 0;
 	double eps = 0.05;
 	bool csv   = false;
+	int threads = DefaultThreads();
 
 	for (int i = 1; i < argc; i++) {
 		const std::string arg = argv[i];
@@ -112,6 +181,9 @@ int main(int argc, char* argv[]) {
 		else if (arg == "--imbalance" && i + 1 < argc) {
 			eps = std::stod(argv[++i]);
 		}
+		else if (arg == "--threads" && i + 1 < argc) {
+			threads = std::stoi(argv[++i]);
+		}
 		else if (arg == "--csv") {
 			csv = true;
 		}
@@ -125,23 +197,32 @@ int main(int argc, char* argv[]) {
 			}
 			return 0;
 		}
+		else if (arg == "--threaded-algos") {
+			for (const std::string& name: kThreadedAlgos) {
+				std::cout << name << '\n';
+			}
+			return 0;
+		}
 		else {
 			return Usage();
 		}
 	}
 
-	if (graph_path.empty() || k <= 0 || algo.empty()) {
+	if (graph_path.empty() || k <= 0 || algo.empty() || threads <= 0) {
 		return Usage();
 	}
 
 	try {
 		const yagkp::UndirectedGraph g(graph_path, "mtx", true);
 		yagkp::ProgramConfig::imbalance = eps;
-		// Многопоточен только YAGkP; число потоков — то, что видит OpenMP
-		const int_t threads = algo == "yagkp" ? yagkp::parallel::MaxThreads() : 1;
+		// The threads actually used: for YAGkP the number OpenMP sees,
+		// for the single-threaded solvers 1
+		const int_t used_threads = algo == "yagkp"    ? yagkp::parallel::MaxThreads()
+		                           : IsThreaded(algo) ? threads
+		                                              : 1;
 
 		const auto start                   = std::chrono::steady_clock::now();
-		const std::vector<int_t> partition = Run(g, algo, k, eps);
+		const std::vector<int_t> partition = Run(g, algo, k, eps, threads);
 		const auto end                     = std::chrono::steady_clock::now();
 		const long long time_ms =
 		    std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
@@ -152,7 +233,7 @@ int main(int argc, char* argv[]) {
 
 		if (csv) {
 			std::cout << std::filesystem::path(graph_path).stem().string() << ',' << g.n << ','
-			          << g.m << ',' << k << ',' << eps << ',' << algo << ',' << threads << ','
+			          << g.m << ',' << k << ',' << eps << ',' << algo << ',' << used_threads << ','
 			          << time_ms << ',' << edge_cut << ',' << std::setprecision(6) << imb << ','
 			          << max_part << '\n';
 		}
