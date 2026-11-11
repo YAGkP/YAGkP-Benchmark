@@ -1,0 +1,44 @@
+BasedOnStyle: LLVM
+
+IndentWidth: 4
+TabWidth: 4
+UseTab: ForIndentation
+
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterControlStatement: false
+  BeforeElse: true
+
+ColumnLimit: 100
+AlignAfterOpenBracket: BlockIndent
+BinPackParameters: false
+BinPackArguments: false
+
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowAllArgumentsOnNextLine: false
+
+PenaltyReturnTypeOnItsOwnLine: 1000
+
+SpaceBeforeParens: ControlStatements
+SpaceAfterCStyleCast: false
+SpaceInEmptyBlock: false
+
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: false
+
+SortIncludes: true
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex: '^<'
+    Priority: 1
+  - Regex: '^"'
+    Priority: 2
+
+Cpp11BracedListStyle: true
+PointerAlignment: Left
+
+SpaceBeforeRangeBasedForLoopColon: false
+
+AllowShortFunctionsOnASingleLine: None
+
+NamespaceIndentation: All

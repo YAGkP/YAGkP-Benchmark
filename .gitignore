@@ -1,0 +1,8 @@
+/build/
+/deps/
+/data/*
+!/data/graphs_manager.sh
+/results/
+__pycache__/
+compile_commands.json
+/.vscode/

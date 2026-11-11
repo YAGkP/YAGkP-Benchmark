@@ -1,0 +1,15 @@
+[submodule "external/GKlib"]
+	path = external/GKlib
+	url = https://github.com/KarypisLab/GKlib
+[submodule "external/METIS"]
+	path = external/METIS
+	url = https://github.com/KarypisLab/METIS
+[submodule "external/KaHIP"]
+	path = external/KaHIP
+	url = https://github.com/KaHIP/KaHIP
+[submodule "external/scotch"]
+	path = external/scotch
+	url = https://github.com/live-clones/scotch
+[submodule "external/YAGkP-Lib"]
+	path = external/YAGkP-Lib
+	url = https://github.com/YAGkP/YAGkP-Lib
